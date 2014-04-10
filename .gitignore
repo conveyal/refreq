@@ -5,3 +5,4 @@
 .project
 .gradle
 .classpath
+*.DS_Store
