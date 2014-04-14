@@ -74,7 +74,6 @@ public class Refreq {
 						windows, store, serviceIds, route);
 		      
 		        System.out.println( freqSubs );
-
 		    }
 		    
 	  }
@@ -119,24 +118,24 @@ public class Refreq {
 					subSchedule, "1");
 			
 			if(out==null){
-				System.out.println("no trips");
+//				System.out.println("no trips");
 			} else {
 				freqSubs.add(out);
-		    	System.out.println( "route "+out.getRoute().getShortName()+", direction "+out.getDirection()+", window "+out.getWindow() );
-		    	System.out.println( "rep_period:"+out.getPeriod() );
-		    	System.out.println( "rep trip:"+out.getTripProfile() );
+//		    	System.out.println( "route "+out.getRoute().getShortName()+", direction "+out.getDirection()+", window "+out.getWindow() );
+//		    	System.out.println( "rep_period:"+out.getPeriod() );
+//		    	System.out.println( "rep trip:"+out.getTripProfile() );
 			}
 			
 			FreqSubschedule inward = buildFreqSubschedule(store, route,
 					subSchedule, "0");
 			
 			if(inward==null){
-				System.out.println("no trips");
+//				System.out.println("no trips");
 			} else {
 				freqSubs.add( inward );
-		    	System.out.println( "route "+inward.getRoute().getShortName()+", direction "+inward.getDirection()+", window "+inward.getWindow() );
-		    	System.out.println( "rep_period:"+inward.getPeriod() );
-		    	System.out.println( "rep trip:"+inward.getTripProfile() );
+//		    	System.out.println( "route "+inward.getRoute().getShortName()+", direction "+inward.getDirection()+", window "+inward.getWindow() );
+//		    	System.out.println( "rep_period:"+inward.getPeriod() );
+//		    	System.out.println( "rep trip:"+inward.getTripProfile() );
 			}
 
 		}
