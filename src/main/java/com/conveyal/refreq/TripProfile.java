@@ -10,9 +10,9 @@ import org.onebusaway.gtfs.model.Trip;
 
 public class TripProfile {
 
-	private ArrayList<Stop> stops;
-	private List<Integer> meanCrossings;
-	private List<Integer> meanDwells;
+	public ArrayList<Stop> stops;
+	public List<Integer> meanCrossings;
+	public List<Integer> meanDwells;
 
 	public TripProfile(GtfsRelationalDaoImpl store, List<Trip> trips) throws Exception {
 		stops = new ArrayList<Stop>();

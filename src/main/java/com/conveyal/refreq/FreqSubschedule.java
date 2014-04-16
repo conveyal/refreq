@@ -1,6 +1,14 @@
 package com.conveyal.refreq;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.onebusaway.gtfs.model.AgencyAndId;
+import org.onebusaway.gtfs.model.Frequency;
 import org.onebusaway.gtfs.model.Route;
+import org.onebusaway.gtfs.model.Stop;
+import org.onebusaway.gtfs.model.StopTime;
+import org.onebusaway.gtfs.model.Trip;
 
 public class FreqSubschedule {
 
@@ -48,6 +56,54 @@ public class FreqSubschedule {
 
 	public Route getRoute() {
 		return route;
+	}
+	
+	public Trip makeTrip(String id) {
+		Trip trip = new Trip();
+		
+		trip.setDirectionId(this.direction);
+		trip.setRoute(this.route);
+		trip.setId(new AgencyAndId(route.getAgency().getId(),id));
+		
+		return trip;
+	}
+
+	public List<StopTime> makeStopTimes(Trip trip) {
+		List<StopTime> stopTimes = new ArrayList<StopTime>();
+		int time=0;
+		for(int i=0; i<tripProfile.stops.size(); i++){
+			Stop stop = tripProfile.stops.get(i);
+			
+			StopTime st = new StopTime();
+			st.setTrip(trip);
+			st.setStop(stop);
+			st.setStopSequence(i);
+			
+			if(i!=0){
+				time += tripProfile.meanCrossings.get(i-1);
+			}
+			
+			st.setArrivalTime(time);
+			time += tripProfile.meanDwells.get(i);
+			st.setDepartureTime(time);
+			
+			stopTimes.add(st);
+		}
+		
+		return stopTimes;
+	}
+	
+	public Frequency makeFrequency(Trip trip, double wait_factor){
+		Frequency ret = new Frequency();
+		ret.setStartTime( this.window.begin );
+		ret.setEndTime( this.window.end );
+		ret.setHeadwaySecs( (int)(this.period/wait_factor) );
+		ret.setTrip(trip);
+		return ret;
+	}
+	
+	public Frequency makeFrequency(Trip trip){
+		return makeFrequency(trip,1.0);
 	}
 
 }

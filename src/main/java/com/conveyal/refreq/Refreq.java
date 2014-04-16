@@ -21,21 +21,32 @@ import org.onebusaway.gtfs.impl.calendar.CalendarServiceDataFactoryImpl;
 import org.onebusaway.gtfs.impl.calendar.CalendarServiceImpl;
 import org.onebusaway.gtfs.model.Agency;
 import org.onebusaway.gtfs.model.AgencyAndId;
+import org.onebusaway.gtfs.model.Frequency;
 import org.onebusaway.gtfs.model.Route;
 import org.onebusaway.gtfs.model.ServiceCalendar;
+import org.onebusaway.gtfs.model.ServiceCalendarDate;
 import org.onebusaway.gtfs.model.Stop;
 import org.onebusaway.gtfs.model.StopTime;
 import org.onebusaway.gtfs.model.Trip;
 import org.onebusaway.gtfs.model.calendar.CalendarServiceData;
 import org.onebusaway.gtfs.model.calendar.ServiceDate;
 import org.onebusaway.gtfs.serialization.GtfsReader;
+import org.onebusaway.gtfs.serialization.GtfsWriter;
 
 public class Refreq {
+	static double WAIT_FACTOR = 2.5;
+	static int DATE_RANGE_RADIUS = 5;
+	
 	  public static void main(String[] args) throws Exception {
 
-		    if (args.length != 2) {
-		      System.err.println("usage: gtfs_feed_path YYYYMMDD");
+		    if (args.length < 2) {
+		      System.err.println("usage: gtfs_feed_path YYYYMMDD [mod_file]");
 		      System.exit(-1);
+		    }
+		    
+		    FreqModFile mods = null;
+		    if( args.length == 3 ){
+		    	mods = new FreqModFile( args[2] );
 		    }
 		    
 		    // read sample date
@@ -45,11 +56,10 @@ public class Refreq {
 		    
 		    // establish important service windows
 		    List<ServiceWindow> windows = new ArrayList<ServiceWindow>();
-		    windows.add( new ServiceWindow(3600*4,3600*6) );   // pre-morning
-		    windows.add( new ServiceWindow(3600*6,3600*9) );   // morning commute
-		    windows.add( new ServiceWindow(3600*9,3600*15) );  // midday
-		    windows.add( new ServiceWindow(3600*15,3600*18) ); // afternoon commute
-		    windows.add( new ServiceWindow(3600*18,3600*24) ); // evening
+		    windows.add( new ServiceWindow(3600*6,3600*9, "peak_am") );   // morning commute
+		    windows.add( new ServiceWindow(3600*9,3600*15, "midday") );  // midday
+		    windows.add( new ServiceWindow(3600*15,3600*18, "peak_pm") ); // afternoon commute
+		    windows.add( new ServiceWindow(3600*18,3600*24, "night") ); // night
 
 		    // read in the GTFS
 		    GtfsReader reader = new GtfsReader();
@@ -67,20 +77,95 @@ public class Refreq {
 		    CalendarServiceData csd = csdfi.createData();
 		    CalendarServiceImpl csi = new CalendarServiceImpl( csd ); 
 		    Set<AgencyAndId> serviceIds = csi.getServiceIdsOnDate(sd);
+		    	
+		    List<FreqSubschedule> allFreqSubs = new ArrayList<FreqSubschedule>();
 		    
-		    // loop through routes, generating  frequency subschedules
+		    // loop through routes, generating frequency subschedules
 		    for (Route route : store.getAllRoutes()) {
+		    	FreqModRec mod = mods.getRoute( route.getShortName() );
+		    	if(mod!=null){
+		    		System.out.println( "has mod" );
+		    	}
+		    	
 		    	List<FreqSubschedule> freqSubs = buildFrequencySchedulesForRoute(
-						windows, store, serviceIds, route);
+						windows, store, serviceIds, route, mod);
 		      
-		        System.out.println( freqSubs );
+		        allFreqSubs.addAll(freqSubs);
 		    }
 		    
+		    
+		    GtfsWriter writer = new GtfsWriter();
+		    writer.setOutputLocation(new File("gtfs_freq.zip"));
+		    
+		    // upload all original agencies
+		    for(Agency agency : store.getAllAgencies()){
+		    	writer.handleEntity(agency);
+		    }
+		    
+		    // and routes
+		    for(Route route : store.getAllRoutes()){
+		    	writer.handleEntity(route);
+		    }
+		    
+		    // and stops
+		    for(Stop stop : store.getAllStops()){
+		    	writer.handleEntity(stop);
+		    }
+		    
+		    // create a service id that only runs on this one day
+//		    ServiceCalendarDate scald = new ServiceCalendarDate();
+//		    scald.setDate( sd );
+//		    scald.setExceptionType(ServiceCalendarDate.EXCEPTION_TYPE_ADD);
+//		    scald.setServiceId(new AgencyAndId(null,"1"));
+//		    writer.handleEntity(scald);
+		    ServiceCalendar scal = new ServiceCalendar();
+		    scal.setStartDate( sd.shift(-DATE_RANGE_RADIUS) );
+		    scal.setEndDate( sd.shift(DATE_RANGE_RADIUS) );
+		    scal.setMonday(1);
+		    scal.setTuesday(1);
+		    scal.setWednesday(1);
+		    scal.setThursday(1);
+		    scal.setFriday(1);
+		    scal.setSaturday(1);
+		    scal.setSunday(1);
+		    scal.setServiceId(new AgencyAndId(null,"1"));
+		    writer.handleEntity(scal);
+		    
+		    
+		    List<Trip> tripQueue = new ArrayList<Trip>();
+		    List<StopTime> stopTimeQueue = new ArrayList<StopTime>();
+		    List<Frequency> frequencyQueue = new ArrayList<Frequency>();
+
+		    Integer tripCounter = 0;
+		    for(FreqSubschedule freqSub : allFreqSubs){
+		    	Trip trip = freqSub.makeTrip(tripCounter.toString());
+		    	trip.setServiceId(new AgencyAndId(null,"1")); //runs on the only service period, a single day
+		    	tripCounter++;
+		    	tripQueue.add(trip);
+		    	
+		    	List<StopTime> stopTimes = freqSub.makeStopTimes(trip);
+		    	stopTimeQueue.addAll(stopTimes);
+		    	
+		    	frequencyQueue.add( freqSub.makeFrequency(trip, WAIT_FACTOR) );
+		    	
+		    }
+		    
+		    for(Trip trip : tripQueue){
+		    	writer.handleEntity(trip);
+		    }
+		    for(StopTime st : stopTimeQueue){
+		    	writer.handleEntity(st);
+		    }
+		    for(Frequency fr : frequencyQueue){
+		    	writer.handleEntity(fr);
+		    }
+
+		    writer.close();
 	  }
 
 	private static List<FreqSubschedule> buildFrequencySchedulesForRoute(
 			List<ServiceWindow> windows, GtfsRelationalDaoImpl store,
-			Set<AgencyAndId> serviceIds, Route route) throws Exception {
+			Set<AgencyAndId> serviceIds, Route route, FreqModRec mod) throws Exception {
 		List<FreqSubschedule> freqSubs = new ArrayList<FreqSubschedule>();
 		
 		System.out.println("route: " + route.getShortName());
@@ -114,8 +199,29 @@ public class Refreq {
 
 		//determine dominant pattern in each direction for service window
 		for(SubSchedule subSchedule : subSchedules.values() ){
+			
 			FreqSubschedule out = buildFreqSubschedule(store, route,
 					subSchedule, "1");
+			
+			// get mod if it exists
+			Double periodMult=null;
+			if(mod!=null){
+				periodMult = mod.getMult( subSchedule.getWindow().name );
+				
+				if( periodMult != null ){
+					// if the mod is positive infinity, this route/window has been cancelled
+					if(periodMult.isInfinite()){
+						System.out.println( "route "+route.getShortName()+" window "+subSchedule.getWindow().name+" has been cancelled" );
+						continue;
+					} else if(periodMult==0){ 
+						//likewise if the mult is 0, it goes form no trips to some trips
+						//TODO handle this properly
+						continue;
+					}
+				}
+			}
+			
+
 			
 			if(out==null){
 //				System.out.println("no trips");
@@ -136,6 +242,17 @@ public class Refreq {
 //		    	System.out.println( "route "+inward.getRoute().getShortName()+", direction "+inward.getDirection()+", window "+inward.getWindow() );
 //		    	System.out.println( "rep_period:"+inward.getPeriod() );
 //		    	System.out.println( "rep trip:"+inward.getTripProfile() );
+			}
+			
+			if(periodMult!=null && periodMult!=1.0){
+				if(out!=null){
+					System.out.println( "route "+route.getShortName()+" outbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
+					out.setPeriod( (int)(out.getPeriod()*periodMult) );
+				}
+				if(inward!=null){
+					System.out.println( "route "+route.getShortName()+" inbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
+					inward.setPeriod( (int)(inward.getPeriod()*periodMult) );
+				}
 			}
 
 		}
