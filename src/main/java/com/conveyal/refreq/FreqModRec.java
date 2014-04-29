@@ -9,9 +9,18 @@ public class FreqModRec {
 	private Double night;
 	private Double sat;
 	private Double sun;
+	boolean suppress = false;
 
 	public FreqModRec(String line) {
 		String[] fields = line.split(",");
+		if(fields.length==2){
+			if(fields[1].equals("SUPPRESS")){
+				this.route = fields[0];
+				this.suppress = true;
+			}
+			return;
+		}
+		
 		this.route = fields[0];
 		this.peak_am = parseField(fields[1]);
 		this.midday = parseField(fields[2]);

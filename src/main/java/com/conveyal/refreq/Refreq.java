@@ -83,8 +83,13 @@ public class Refreq {
 		    // loop through routes, generating frequency subschedules
 		    for (Route route : store.getAllRoutes()) {
 		    	FreqModRec mod = mods.getRoute( route.getShortName() );
+		    	
 		    	if(mod!=null){
 		    		System.out.println( "has mod" );
+			    	if( mod.suppress ){
+			    		System.out.println( "suppress" );
+			    		continue;
+			    	}
 		    	}
 		    	
 		    	List<FreqSubschedule> freqSubs = buildFrequencySchedulesForRoute(
