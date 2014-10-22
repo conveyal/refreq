@@ -81,22 +81,14 @@ public class Refreq {
 		    List<FreqSubschedule> allFreqSubs = new ArrayList<FreqSubschedule>();
 		    
 		    // loop through routes, generating frequency subschedules
-		    for (Route route : store.getAllRoutes()) {
-		    	FreqModRec mod=null;
-		    	if(mods!=null){
-		    		mod = mods.getRoute( route.getShortName() );
-		    	}
-		    	
-		    	if(mod!=null){
-		    		System.out.println( "has mod" );
-			    	if( mod.suppress ){
-			    		System.out.println( "suppress" );
-			    		continue;
-			    	}
+		    for (FreqModRec mod : mods.mods){
+		    	if( mod.suppress ){
+		    		System.out.println( "suppress" );
+		    		continue;
 		    	}
 		    	
 		    	List<FreqSubschedule> freqSubs = buildFrequencySchedulesForRoute(
-						windows, store, serviceIds, route, mod);
+						windows, store, serviceIds, mod);
 		      
 		        allFreqSubs.addAll(freqSubs);
 		    }
@@ -173,16 +165,18 @@ public class Refreq {
 
 	private static List<FreqSubschedule> buildFrequencySchedulesForRoute(
 			List<ServiceWindow> windows, GtfsRelationalDaoImpl store,
-			Set<AgencyAndId> serviceIds, Route route, FreqModRec mod) throws Exception {
+			Set<AgencyAndId> serviceIds, FreqModRec mod) throws Exception {
 		List<FreqSubschedule> freqSubs = new ArrayList<FreqSubschedule>();
 		
-		System.out.println("route: " + route.getShortName());
+		System.out.println("mod: " + mod);
 		
 		// filter trips to only trips that run on the sample date
 		ArrayList<Trip> trips = new ArrayList<Trip>();
-		for(Trip trip : store.getTripsForRoute(route)){
-			if( serviceIds.contains(trip.getServiceId()) ){
-				trips.add(trip);
+		for(AgencyAndId serviceId : serviceIds ){
+			for(Trip trip : store.getTripsForServiceId(serviceId)){
+				if( mod.matches(trip) ){
+					trips.add(trip);
+				}
 			}
 		}
 		
@@ -208,7 +202,7 @@ public class Refreq {
 		//determine dominant pattern in each direction for service window
 		for(SubSchedule subSchedule : subSchedules.values() ){
 			
-			FreqSubschedule out = buildFreqSubschedule(store, route,
+			FreqSubschedule out = buildFreqSubschedule(store,
 					subSchedule, "1");
 			
 			// get mod if it exists
@@ -219,7 +213,7 @@ public class Refreq {
 				if( periodMult != null ){
 					// if the mod is positive infinity, this route/window has been cancelled
 					if(periodMult.isInfinite()){
-						System.out.println( "route "+route.getShortName()+" window "+subSchedule.getWindow().name+" has been cancelled" );
+						System.out.println( "some trips window "+subSchedule.getWindow().name+" has been cancelled" );
 						continue;
 					} else if(periodMult==0){ 
 						//likewise if the mult is 0, it goes form no trips to some trips
@@ -240,7 +234,7 @@ public class Refreq {
 //		    	System.out.println( "rep trip:"+out.getTripProfile() );
 			}
 			
-			FreqSubschedule inward = buildFreqSubschedule(store, route,
+			FreqSubschedule inward = buildFreqSubschedule(store,
 					subSchedule, "0");
 			
 			if(inward==null){
@@ -254,11 +248,11 @@ public class Refreq {
 			
 			if(periodMult!=null && periodMult!=1.0){
 				if(out!=null){
-					System.out.println( "route "+route.getShortName()+" outbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
+					System.out.println( "some trips outbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
 					out.setPeriod( (int)(out.getPeriod()*periodMult) );
 				}
 				if(inward!=null){
-					System.out.println( "route "+route.getShortName()+" inbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
+					System.out.println( "some trips inbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
 					inward.setPeriod( (int)(inward.getPeriod()*periodMult) );
 				}
 			}
@@ -268,7 +262,7 @@ public class Refreq {
 	}
 
 	private static FreqSubschedule buildFreqSubschedule(
-			GtfsRelationalDaoImpl store, Route route, SubSchedule subSchedule,
+			GtfsRelationalDaoImpl store, SubSchedule subSchedule,
 			String direction) throws Exception {
 		List<Trip> inbound = subSchedule.getTripsInDirection(direction);
 		
@@ -279,7 +273,6 @@ public class Refreq {
 		FreqSubschedule ret = new FreqSubschedule();
 		ret.setWindow( subSchedule.getWindow() );
 		ret.setDirection( direction );
-		ret.setRoute( route );
 		
 		Map<List<Stop>, List<Trip>> patterns = getPatterns( store, inbound );
 		

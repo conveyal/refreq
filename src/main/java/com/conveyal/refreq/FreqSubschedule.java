@@ -16,7 +16,6 @@ public class FreqSubschedule {
 	private int period;
 	private TripProfile tripProfile;
 	private String direction;
-	private Route route;
 
 	public void setWindow(ServiceWindow window) {
 		this.window = window;
@@ -34,10 +33,6 @@ public class FreqSubschedule {
 		this.direction = direction;
 	}
 
-	public void setRoute(Route route) {
-		this.route = route;
-	}
-
 	public int getPeriod() {
 		return period;
 	}
@@ -53,17 +48,14 @@ public class FreqSubschedule {
 	public ServiceWindow getWindow() {
 		return window;
 	}
-
-	public Route getRoute() {
-		return route;
-	}
 	
 	public Trip makeTrip(String id) {
 		Trip trip = new Trip();
 		
 		trip.setDirectionId(this.direction);
-		trip.setRoute(this.route);
-		trip.setId(new AgencyAndId(route.getAgency().getId(),id));
+		
+		trip.setRoute(this.tripProfile.exemplar.getRoute());
+		trip.setId( new AgencyAndId(this.tripProfile.exemplar.getRoute().getAgency().getId(), id) );
 		
 		return trip;
 	}

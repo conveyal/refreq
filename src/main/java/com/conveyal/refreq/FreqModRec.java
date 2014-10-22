@@ -2,6 +2,8 @@ package com.conveyal.refreq;
 
 import java.util.Map;
 
+import org.onebusaway.gtfs.model.Trip;
+
 public class FreqModRec {
 
 	private String route=null;
@@ -88,6 +90,10 @@ public class FreqModRec {
 		} else {
 			throw new Exception( "unknown name" );
 		}
+	}
+
+	public boolean matches(Trip trip) {
+		return (this.route!=null && trip.getRoute().getShortName().equals(this.route)) || (this.trip!=null && trip.getId().getId().matches(this.trip)); 
 	}
 
 }

@@ -13,15 +13,17 @@ public class TripProfile {
 	public ArrayList<Stop> stops;
 	public List<Integer> meanCrossings;
 	public List<Integer> meanDwells;
+	public Trip exemplar;
 
 	public TripProfile(GtfsRelationalDaoImpl store, List<Trip> trips) throws Exception {
 		stops = new ArrayList<Stop>();
-		
 		
 		//get representative list of stops
 		if(trips.size()==0){
 			throw new Exception( "The list of trips can't be empty." );
 		}
+		
+		this.exemplar = trips.get(0);
 		
 		// Grab every stopTime for every trip. We'll need them.
 		List<List<StopTime>> grid = new ArrayList<List<StopTime>>();
