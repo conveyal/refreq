@@ -1,17 +1,23 @@
 package com.conveyal.refreq;
 
+import java.util.Map;
+
 public class FreqModRec {
 
-	private String route;
-	private Double peak_am;
-	private Double midday;
-	private Double peak_pm;
-	private Double night;
-	private Double sat;
-	private Double sun;
+	private String route=null;
+	private String trip=null;
+	private Double peak_am=null;
+	private Double midday=null;
+	private Double peak_pm=null;
+	private Double night=null;
+	private Double sat=null;
+	private Double sun=null;
 	boolean suppress = false;
+	boolean absolute = false;
+	private Double phase;
+	private String phase_stop;
 
-	public FreqModRec(String line) {
+	public FreqModRec(String line, Map<String, Integer> header) {
 		String[] fields = line.split(",");
 		if(fields.length==2){
 			if(fields[1].equals("SUPPRESS")){
@@ -21,13 +27,31 @@ public class FreqModRec {
 			return;
 		}
 		
-		this.route = fields[0];
-		this.peak_am = parseField(fields[1]);
-		this.midday = parseField(fields[2]);
-		this.peak_pm = parseField(fields[3]);
-		this.night = parseField(fields[4]);
-		this.sat = parseField(fields[5]);
-		this.sun = parseField(fields[6]);
+		if(header.containsKey("route")){
+			this.route = fields[header.get("route")];
+		}
+		if(header.containsKey("trip")){
+			this.trip = fields[header.get("trip")];
+		}
+		if(header.containsKey("peak_am")) this.peak_am = parseField(fields[header.get("peak_am")]);
+		if(header.containsKey("midday")) this.midday = parseField(fields[header.get("midday")]);
+		if(header.containsKey("peak_pm")) this.peak_pm = parseField(fields[header.get("peak_pm")]);
+		if(header.containsKey("night")) this.night = parseField(fields[header.get("night")]);
+		if(header.containsKey("sat")) this.sat = parseField(fields[header.get("sat")]);
+		if(header.containsKey("sun")) this.sun = parseField(fields[header.get("sun")]);
+		
+		if(header.containsKey("absolute")){
+			this.absolute = Boolean.parseBoolean( fields[header.get("absolute")] );
+		}
+		
+		if(header.containsKey("phase")){
+			this.phase = parseField( fields[header.get("phase")] );
+		}
+		
+		if(header.containsKey("phase_stop")){
+			this.phase_stop = fields[header.get("phase_stop")];
+		}
+		
 	}
 
 	private Double parseField(String string) {
@@ -42,6 +66,10 @@ public class FreqModRec {
 
 	public String getRoute() {
 		return route;
+	}
+	
+	public String getTrip() {
+		return trip;
 	}
 
 	public Double getMult(String name) throws Exception {
