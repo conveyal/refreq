@@ -34,7 +34,7 @@ import org.onebusaway.gtfs.serialization.GtfsReader;
 import org.onebusaway.gtfs.serialization.GtfsWriter;
 
 public class Refreq {
-	static double WAIT_FACTOR = 2.5;
+	static double WAIT_FACTOR = 1.0;
 	static int DATE_RANGE_RADIUS = 5;
 	
 	  public static void main(String[] args) throws Exception {
@@ -246,14 +246,23 @@ public class Refreq {
 //		    	System.out.println( "rep trip:"+inward.getTripProfile() );
 			}
 			
-			if(periodMult!=null && periodMult!=1.0){
+			if(mod.absolute){
 				if(out!=null){
-					System.out.println( "some trips outbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
-					out.setPeriod( (int)(out.getPeriod()*periodMult) );
+					out.setPeriod( periodMult.intValue() );
 				}
 				if(inward!=null){
-					System.out.println( "some trips inbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
-					inward.setPeriod( (int)(inward.getPeriod()*periodMult) );
+					inward.setPeriod( periodMult.intValue() );
+				}
+			} else {
+				if(periodMult!=null && periodMult!=1.0){
+					if(out!=null){
+						System.out.println( "some trips outbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
+						out.setPeriod( (int)(out.getPeriod()*periodMult) );
+					}
+					if(inward!=null){
+						System.out.println( "some trips inbound window "+subSchedule.getWindow().name+" period ->"+periodMult );
+						inward.setPeriod( (int)(inward.getPeriod()*periodMult) );
+					}
 				}
 			}
 
