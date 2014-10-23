@@ -16,8 +16,8 @@ public class FreqModRec {
 	private Double sun=null;
 	boolean suppress = false;
 	boolean absolute = false;
-	private Double phase;
-	private String phase_stop;
+	Double offset;
+	String offsetStop;
 
 	public FreqModRec(String line, Map<String, Integer> header) {
 		String[] fields = line.split(",");
@@ -46,12 +46,12 @@ public class FreqModRec {
 			this.absolute = Boolean.parseBoolean( fields[header.get("absolute")] );
 		}
 		
-		if(header.containsKey("phase")){
-			this.phase = parseField( fields[header.get("phase")] );
+		if(header.containsKey("offset")){
+			this.offset = parseField( fields[header.get("offset")] );
 		}
 		
-		if(header.containsKey("phase_stop")){
-			this.phase_stop = fields[header.get("phase_stop")];
+		if(header.containsKey("offset_stop")){
+			this.offsetStop = fields[header.get("offset_stop")];
 		}
 		
 	}

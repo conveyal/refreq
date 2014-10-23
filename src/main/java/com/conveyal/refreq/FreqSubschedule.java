@@ -16,6 +16,8 @@ public class FreqSubschedule {
 	private int period;
 	private TripProfile tripProfile;
 	private String direction;
+	private Double offset;
+	private String offsetStop;
 
 	public void setWindow(ServiceWindow window) {
 		this.window = window;
@@ -61,12 +63,15 @@ public class FreqSubschedule {
 	}
 
 	public List<StopTime> makeStopTimes(Trip trip) {
+		Integer preFixedOffset = null;
+		
 		List<StopTime> stopTimes = new ArrayList<StopTime>();
 		int time=0;
 		for(int i=0; i<tripProfile.stops.size(); i++){
 			Stop stop = tripProfile.stops.get(i);
 			
 			StopTime st = new StopTime();
+			
 			st.setTrip(trip);
 			st.setStop(stop);
 			st.setStopSequence(i);
@@ -75,11 +80,24 @@ public class FreqSubschedule {
 				time += tripProfile.meanCrossings.get(i-1);
 			}
 			
+			if(this.offsetStop!=null && stop.getId().getId().equals(this.offsetStop)){
+				preFixedOffset = time;
+			}
+			
 			st.setArrivalTime(time);
 			time += tripProfile.meanDwells.get(i);
 			st.setDepartureTime(time);
 			
 			stopTimes.add(st);
+		}
+		
+		// slide everything around by the offset if possible
+		if(preFixedOffset!=null && this.offset!=null){
+			Integer diff = this.offset.intValue() - preFixedOffset;
+			for(StopTime st : stopTimes){
+				st.setArrivalTime(st.getArrivalTime() + diff);
+				st.setDepartureTime(st.getDepartureTime() + diff);
+			}
 		}
 		
 		return stopTimes;
@@ -96,6 +114,14 @@ public class FreqSubschedule {
 	
 	public Frequency makeFrequency(Trip trip){
 		return makeFrequency(trip,1.0);
+	}
+
+	public void setOffset(Double offset) {
+		this.offset = offset;
+	}
+
+	public void setOffsetStop(String offsetStop) {
+		this.offsetStop = offsetStop;
 	}
 
 }

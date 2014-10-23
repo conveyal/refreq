@@ -202,7 +202,7 @@ public class Refreq {
 		// determine dominant pattern in each direction for service window
 		for (SubSchedule subSchedule : subSchedules.values()) {
 
-			FreqSubschedule out = buildFreqSubschedule(store, subSchedule, "1");
+			FreqSubschedule out = buildFreqSubschedule(store, subSchedule, "1", mod.offset, mod.offsetStop);
 
 			// get mod if it exists
 			Double periodMult = null;
@@ -235,7 +235,7 @@ public class Refreq {
 				// System.out.println( "rep trip:"+out.getTripProfile() );
 			}
 
-			FreqSubschedule inward = buildFreqSubschedule(store, subSchedule, "0");
+			FreqSubschedule inward = buildFreqSubschedule(store, subSchedule, "0", mod.offset, mod.offsetStop);
 
 			if (inward == null) {
 				// System.out.println("no trips");
@@ -275,7 +275,7 @@ public class Refreq {
 	}
 
 	private static FreqSubschedule buildFreqSubschedule(GtfsRelationalDaoImpl store, SubSchedule subSchedule,
-			String direction) throws Exception {
+			String direction, Double offset, String offsetStop) throws Exception {
 		List<Trip> inbound = subSchedule.getTripsInDirection(direction);
 
 		if (inbound.size() == 0) {
@@ -283,6 +283,8 @@ public class Refreq {
 		}
 
 		FreqSubschedule ret = new FreqSubschedule();
+		ret.setOffset( offset );
+		ret.setOffsetStop( offsetStop );
 		ret.setWindow(subSchedule.getWindow());
 		ret.setDirection(direction);
 
