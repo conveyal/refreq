@@ -139,6 +139,7 @@ public class FreqSubschedule {
 		
 		ret.setHeadwaySecs( (int)(this.period/wait_factor) );
 		ret.setTrip(trip);
+		ret.setExactTimes(1);
 		return ret;
 	}
 	

@@ -1,0 +1,5 @@
+trip,peak_am,absolute,offset,offset_stop
+2247,3600,true,0,105
+2605,3600,true,900,105
+157,3600,true,1800,105
+1687,3600,true,2700,105
