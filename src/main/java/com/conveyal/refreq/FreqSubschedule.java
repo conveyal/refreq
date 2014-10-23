@@ -63,7 +63,7 @@ public class FreqSubschedule {
 	}
 
 	public List<StopTime> makeStopTimes(Trip trip) {
-		Integer preFixedOffset = null;
+		Integer preFixedOffset=null;
 		
 		List<StopTime> stopTimes = new ArrayList<StopTime>();
 		int time=0;
@@ -91,22 +91,52 @@ public class FreqSubschedule {
 			stopTimes.add(st);
 		}
 		
-		// slide everything around by the offset if possible
-		if(preFixedOffset!=null && this.offset!=null){
-			Integer diff = this.offset.intValue() - preFixedOffset;
-			for(StopTime st : stopTimes){
-				st.setArrivalTime(st.getArrivalTime() + diff);
-				st.setDepartureTime(st.getDepartureTime() + diff);
-			}
-		}
+//		// slide everything around by the offset if possible
+//		if(preFixedOffset!=null && this.offset!=null){
+//			Integer diff = this.offset.intValue() - preFixedOffset;
+//			for(StopTime st : stopTimes){
+//				st.setArrivalTime(st.getArrivalTime() + diff);
+//				st.setDepartureTime(st.getDepartureTime() + diff);
+//			}
+//		}
 		
 		return stopTimes;
 	}
 	
+	public Integer getPreFixedOffset(Trip trip) {
+		if( this.offsetStop==null ){
+			return null;
+		}
+		
+		int time=0;
+		for(int i=0; i<tripProfile.stops.size(); i++){
+			Stop stop = tripProfile.stops.get(i);
+			
+			if(i!=0){
+				time += tripProfile.meanCrossings.get(i-1);
+			}
+			
+			if(stop.getId().getId().equals(this.offsetStop)){
+				return time;
+			}
+			
+			time += tripProfile.meanDwells.get(i);
+		}
+		
+		return null;
+	}
+	
 	public Frequency makeFrequency(Trip trip, double wait_factor){
 		Frequency ret = new Frequency();
-		ret.setStartTime( this.window.begin );
+		
+		Integer offset = getPreFixedOffset(trip);
+		if(this.offset!=null && offset!=null){
+			ret.setStartTime( this.window.begin-(offset-this.offset.intValue()) );
+		} else {
+			ret.setStartTime( this.window.begin );
+		}
 		ret.setEndTime( this.window.end );
+		
 		ret.setHeadwaySecs( (int)(this.period/wait_factor) );
 		ret.setTrip(trip);
 		return ret;
