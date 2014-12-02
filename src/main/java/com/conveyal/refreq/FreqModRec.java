@@ -93,7 +93,7 @@ public class FreqModRec {
 	}
 
 	public boolean matches(Trip trip) {
-		return (this.route!=null && trip.getRoute().getShortName().equals(this.route)) || (this.trip!=null && trip.getId().getId().matches(this.trip)); 
+		return (this.route!=null && this.route.equals(trip.getRoute().getShortName())) || (this.trip!=null && trip.getId().getId().matches(this.trip)); 
 	}
 
 }
