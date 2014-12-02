@@ -1,6 +1,6 @@
 # refreq
 
-A tool for coercing a GTFS into a frequency-based format. Refreq does this by making several groups, each with members that match a line in the 'modfile', establishing a representitive frequency for those set of trips, and then writing a 'frequences.txt' record for each group pointing to new trip averaged from the grouped trips.
+A tool for coercing a GTFS into a frequency-based format. Refreq does this by making several groups, each with members that match a line in the 'modfile', establishing a representative frequency for those set of trips, and then writing a 'frequences.txt' record for each group pointing to new trip averaged from the grouped trips. It is distinct from [resample_gtfs](https://github.com/conveyal/resample_gtfs), which accomplishes a similar task but creates bona fide trips rather than frequency entries.
 
 ## prereqs
 
@@ -9,11 +9,11 @@ A tool for coercing a GTFS into a frequency-based format. Refreq does this by ma
 ## build
 
     $ gradle fatJar
-    
+
 ## running
 
     $ java -jar ./build/libs/refreq.jar gtfs_feed_path sample_date [mod_file]
-    
+
 With parameters:
 - gtfs_feed_path: A path to a gtfs feed.
 - sample_date: Sample date in YYYYMMDD file. The date that you want your fake GTFS frequencies to superficially resemble.
@@ -24,7 +24,7 @@ The mod_file is a CSV with the following fields. The header line is not optional
 - 'route'. Either 'route' or 'trip' are required. The route_short_name of trips to group into a frequency subschedule.
 - 'trip'. Either 'route' or 'trip' are required. A single trip to build a frequency subschedule out of.
 
-'absolute'. Optional. If the value is 'true', the contents of the time window fields will be taken as the absolute period of the frequency subschedule. If not, the contents will be taken as a multiplier on the representitive period.
+'absolute'. Optional. If the value is 'true', the contents of the time window fields will be taken as the absolute period of the frequency subschedule. If not, the contents will be taken as a multiplier on the representative period.
 
 The next several fields can take different values depending on whether the 'absolute' is set to 'true'. If not the values are either a decimal number indicating the change in the *period* of the frequency subschedule - that is, if the value is '2.0' then vehicles will arrive half as frequently, or '0.5' means twice as frequency. The string 'inf' means the period becomes infintely long - that is, service is cancelled. The string 'None' will result in no frequency subschedule for those trips at that time, but doesn't imply a service change. If the 'absolute' value is true these fields take an integer value.
 
